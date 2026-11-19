@@ -1,0 +1,4 @@
+# Area "image generation, SD3.5" trainer config for ext-collect (EXT-2): the adapter and the launch profile.
+# prototype, unpromotable.
+backend: flow_grpo_sd35
+profile: full

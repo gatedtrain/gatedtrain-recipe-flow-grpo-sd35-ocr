@@ -1,0 +1,32 @@
+# Area "image generation, SD3.5" workflow: Flow-GRPO + LoRA on SD3.5 Medium (minimal port train_flow_grpo.py), OCR
+# text rendering, gated on docTR OCR accuracy of 400 held-out prompts against the base alone (MULTIMODAL-SPEC row 2b
+# and its deviations; runtime/README.md "Decisions taken"). prototype, unpromotable.
+# base: the maintainers' SD3.5 Medium download (revision b940f670...), manifest hash without its own .cache/ (decision);
+# prompts: the training shard (train.jsonl, 18,359 prompts, disjoint from the items by prompt and target text);
+# items: the registered set (400). All inside the read-only area5-sd35 mount. `gatedtrain run` refuses this spec.
+workflow: mm-a5-sd35-flow-grpo
+version: 1
+budget: {gpu_hours: 24}
+artifacts:
+  base:         {type: model_checkpoint, uri: "file:<data-root>/area5-sd35/models/stable-diffusion-3.5-medium@sha256:a19e90d642ea0fd6298d56d693ee77acd1f50ff63708f06f0beda52414cdc1f5"}
+  prompts:      {type: training_dataset, uri: "file:<data-root>/area5-sd35/prompts@sha256:4483a9f25e92db68024386ef3701c036576f357414769d762a2a8022fdd3b457"}
+  items:        {type: item_set, uri: "file:<data-root>/area5-sd35/items@sha256:0b01553c4c74ef18c9954dca686c8edc00b18e20e3d43346265858303d8ad4a7", disjoint_from: [prompts]}
+  trainer_cfg:  {type: trainer_config, uri: "file:trainer.yaml@sha256:fbb22e15e9e49394e28af750036cded1acced8ea9aeffac979567fd032d139da"}
+  registration: {type: registration, uri: "file:registration-gatedtrain.yaml@sha256:0cf6a03f548d0c42e19046c453a8a16ad518e8aef14b46ca306b35b834e03ebc"}
+stages:
+  - id: rl
+    uses: rl.flow_grpo@0.1
+    algorithm: flow_grpo
+    model_family: t2i.sd35_lora@0.1
+    inputs: {model: base, data: prompts, config: trainer_cfg}
+    outputs: {model: rl_ckpt}
+  - id: quality_gate
+    uses: gate.superiority@1.0
+    evaluator: t2i.sd35_ocr_doctr_items@0.1
+    sampler: deployment
+    inputs: {model: rl_ckpt, baseline: base, items: items, registration: registration}
+    # mde equals the registration's planning_effect (G-4).
+    test: {metric: ocr_b_acc, alpha: 0.025, power: 0.80, mde: 0.07, cluster_by: item, seeds: 1}
+    on_fail: stop
+    owner: skeleton-demo
+    escalation: [skeleton-demo-lead]

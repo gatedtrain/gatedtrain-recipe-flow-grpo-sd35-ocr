@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.egg-info/
+build/
+dist/
+runtime/.venv/
+runtime/models/
+runtime/ocr-models/
+runtime/prompts/train.jsonl
+runtime/data-source/ocr/train.txt
+runtime/data-source/ocr/test.txt
+area5-ref/
+*.pyc
+.pytest_cache/
+.DS_Store

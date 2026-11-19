@@ -1,0 +1,49 @@
+# Multimodal prototype, area "image generation, SD3.5" (MULTIMODAL-SPEC section 6 row 2b): Flow-GRPO
+# RL fine-tuning of Stable Diffusion 3.5 Medium with a LoRA adapter on one RTX 4090 (prototype, unpromotable).
+# Runtime kind `venv_in_container` (MULTIMODAL-SPEC MM-32): this lock builds a host venv that is mounted read-only
+# into a pinned CUDA base image (the area-1 image). See README.md.
+#
+# Trainer: a minimal Flow-GRPO port on current diffusers + peft (`train_flow_grpo.py`), from yifan123/flow_grpo at
+# commit 879042cf5707f8b90daa98d147d7deac2317c5da (MIT), whose own pins (torch 2.6.0, diffusers 0.33.1,
+# transformers 4.40.0, peft 0.10.0, accelerate 1.4.0, paddleocr 2.9.1 with numpy<2) do not install beside the
+# framework versions of the other image area (README.md "Trainer choice").
+#
+# Version rule: latest stable release at least two weeks old (cut-off 2026-10-29, as area 3), compatible.
+#   Framework pins identical to area 3 (torch 2.15.0, diffusers 0.42.1, transformers 5.21.0, peft 0.21.2, ...).
+#   OCR engine A (training reward, as flow_grpo/ocr.py): PaddleOCR 2.10.0, the last 2.x release (same
+#   `PaddleOCR(use_angle_cls, lang, use_gpu, show_log)` / `.ocr(img, cls=False)` API as flow_grpo's 2.9.1, without
+#   its numpy<2 pin), on paddlepaddle 3.3.1 (CPU wheel; flow_grpo also runs the OCR reward with use_gpu=False).
+#   OCR engine B (deciding metric): docTR (mindee python-doctr 1.1.0, PyTorch), a different detector and recognizer.
+[project]
+name = "gatedtrain-recipe-flow-grpo-sd35-ocr-runtime"
+version = "0.1.0"
+license = "Apache-2.0"
+requires-python = "==3.12.*"
+dependencies = [
+    "torch==2.15.0",
+    "torchvision==0.29.2",
+    "diffusers==0.42.1",
+    "transformers==5.21.0",
+    "peft==0.21.2",
+    "accelerate==1.15.0",
+    "safetensors==0.8.0",
+    "pillow==13.0.0",
+    "numpy==2.5.4",
+    "sentencepiece",
+    "protobuf",
+    # OCR engine A (reward): flow_grpo/ocr.py imports `paddleocr.PaddleOCR` and `Levenshtein.distance`; the edit
+    # distance comes from rapidfuzz (MIT) here, the library python-Levenshtein (GPL-2.0-or-later) wraps, at the
+    # version the published run's lock already held (RESULT.md).
+    "paddlepaddle==3.0.0",
+    "paddleocr==2.10.0",
+    "rapidfuzz==3.14.6",
+    # OCR engine B (deciding metric).
+    "python-doctr==1.1.0",
+]
+
+[tool.uv]
+package = false
+# Linux x86_64 only (the platform of the published result).
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+# Every transitive dependency resolves to a release at least two weeks old.
+exclude-newer = "2026-10-29T00:00:00Z"

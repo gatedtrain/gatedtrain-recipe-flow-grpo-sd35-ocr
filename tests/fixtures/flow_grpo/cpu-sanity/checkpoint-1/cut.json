@@ -1,0 +1,31 @@
+{
+  "created_at": "2026-11-13T21:27:27Z",
+  "deployable": [
+    "pytorch_lora_weights.safetensors",
+    "adapter_config.json",
+    "sampler.json",
+    "base_ref.json"
+  ],
+  "ema": false,
+  "epoch": 1,
+  "files": {
+    "adapter_config.json": "sha256:5119cfc7d572d088c300b5fa4a1cab17cc7706f087531b7804055f5aa8570cb2",
+    "base_ref.json": "sha256:12af916092f108176102c8796747e5fc4a64f315ac88703d6426fda58c51824d",
+    "pytorch_lora_weights.safetensors": "sha256:d8f18c3ae253c9ada6bb1c4b2a5462fd852cc6dc35310a317507f0f479351130",
+    "sampler.json": "sha256:65df7679052635c2dd1a8055fb63e106f8e17dc5eb4e08d19bce12992f3fd044",
+    "trainer_state.json": "sha256:5b9f7618e811fe8995d00ad4e840ad0a18c72ed7d97ae1c44b03e54b91cfb6c0"
+  },
+  "global_step": 2,
+  "profile": "cpu-sanity",
+  "sampler_code_sha256": "sha256:83133e246f4b73daa8cf3576b2e7152960a98fb7f19b5e92ad36cf3b5bbff589",
+  "samples_consumed": 4,
+  "samples_filtered": 0,
+  "schema": "ptc_mm.flow_grpo_sd35_cut",
+  "schema_version": "1.0",
+  "script_sha256": "sha256:a892c40dfeb24bb95c535bea9118818bfc5f6e03a18ff7d67198929c5307e1b9",
+  "seed": 5000,
+  "tags": [
+    "prototype",
+    "unpromotable"
+  ]
+}

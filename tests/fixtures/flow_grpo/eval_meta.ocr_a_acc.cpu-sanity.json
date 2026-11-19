@@ -1,0 +1,88 @@
+{
+  "adapter": "flow_grpo_sd35",
+  "checkpoint": {
+    "base_model_hash": null,
+    "model_hash": null
+  },
+  "created_at": "2026-11-14T01:56:59Z",
+  "direction": "higher_is_better",
+  "env_version_sha256": null,
+  "eval_seeds": [
+    11
+  ],
+  "evaluator_id": "t2i.sd35_ocr_paddle_items@0.1",
+  "framework": {
+    "name": "diffusers",
+    "version": "0.42.1"
+  },
+  "item_set_hash": null,
+  "metric": "ocr_a_acc",
+  "normalizer_sha256": null,
+  "sampler": {
+    "autocast": null,
+    "guidance_scale": 4.5,
+    "latents_dtype": "float32",
+    "max_sequence_length": 128,
+    "negative_prompt": "",
+    "noise": "per sample: torch.Generator('cpu').manual_seed(seed); initial latents, then one draw per step when noise_level > 0",
+    "noise_level": 0.0,
+    "num_steps": 3,
+    "resolution": 128,
+    "scheduler": "FlowMatchEulerDiscreteScheduler",
+    "scheduler_config": {
+      "_class_name": "FlowMatchEulerDiscreteScheduler",
+      "_diffusers_version": "0.29.0.dev0",
+      "_use_default_values": [
+        "base_image_seq_len",
+        "base_shift",
+        "invert_sigmas",
+        "max_image_seq_len",
+        "max_shift",
+        "shift_terminal",
+        "stochastic_sampling",
+        "time_shift_type",
+        "use_beta_sigmas",
+        "use_dynamic_shifting",
+        "use_exponential_sigmas",
+        "use_karras_sigmas"
+      ],
+      "base_image_seq_len": 256,
+      "base_shift": 0.5,
+      "invert_sigmas": false,
+      "max_image_seq_len": 4096,
+      "max_shift": 1.15,
+      "num_train_timesteps": 1000,
+      "shift": 3.0,
+      "shift_terminal": null,
+      "stochastic_sampling": false,
+      "time_shift_type": "exponential",
+      "use_beta_sigmas": false,
+      "use_dynamic_shifting": false,
+      "use_exponential_sigmas": false,
+      "use_karras_sigmas": false
+    },
+    "sigmas": [
+      1.0,
+      0.7511211,
+      0.00892857,
+      0.0
+    ],
+    "step": "flow_grpo sde_step_with_logprob (sde); noise_level 0 = Euler ODE step",
+    "text_encoder_dtype": "fp16",
+    "transformer_dtype": "fp32",
+    "vae_dtype": "float32"
+  },
+  "sampler_hash": "sha256:3cb6fd570f909e34ce61c250f654d19247caee851c8bb5e7591eaca58aeccc09",
+  "schema": "ptc_skel.item_eval",
+  "schema_version": "1.0",
+  "score_range": [
+    0,
+    1
+  ],
+  "scorer": {
+    "code_sha256": "sha256:fdad8eb9b8de45a0c002a62469fb043fdeaf1c38b9449d41fd5a430e9adee8ad",
+    "name": "ocr_accuracy_paddleocr",
+    "version": "eval_images@0.1 engine PaddleOCR PP-OCRv4 paddleocr 2.10.0 paddlepaddle 3.0.0 PP-OCRv4_mobile_det@3cc09f3a5b424e8e010abc7a4271aea12999c2f7 en_PP-OCRv4_mobile_rec@f97b62fdc0eb71c689393a19a4b21baa1795c9ab",
+    "weights_sha256": "sha256:7783ef1516fc76bcd590b6fac074b4942f15a9111c9d55506256a8067d13f07a"
+  }
+}

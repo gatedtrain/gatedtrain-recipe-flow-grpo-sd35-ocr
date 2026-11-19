@@ -1,0 +1,81 @@
+# Amendment for the rename to ptc-hub 0.2.0 (05 section 3.7, R17-1/R17-3): post_hoc, because the scorer changed
+# after the gate beyond the rename. It amends registration.yaml beside it (sha256:2570e56e...), the published copy
+# of the gate-time registration sha256:5c5892b7ae4efb2e09b412df28d0d565c64e013d972160b3e32d30fd951aba8d, from which it differs
+# only in redacted comments.
+# Area "image generation, SD3.5" pre-registration: Flow-GRPO + LoRA on SD3.5 Medium against the base alone, OCR text
+# rendering (05 section 3.7; MULTIMODAL-SPEC row 2b and its deviations; runtime/README.md "Decisions taken"
+# and its "Smoke finding"). prototype, unpromotable. Unsigned: no named team has signed it.
+# Values fixed after the smoke run and before the full run's first START in gpu-guard.log. Deciding T3 metric
+# `ocr_b_acc` (docTR, best-matching-substring edit distance; higher is better; [0, 1]), blocking, construct-aligned
+# with the PaddleOCR reward (R15-1); superiority with margin 0; alpha 0.025 one-sided, power 0.8, m = 1; N 400, K 1,
+# eval seed 11. sigma_plan fixed 0.48 = max(1.5 x ucb80(s_pilot), sqrt(2) x ucb80(s_base)) from the smoke
+# (s_pilot 0.227 = SD of 40 paired differences smoke cut 2 vs base; s_base 0.301; ucb80 with 39 df: 0.2525, 0.3351;
+# 1.5 x 0.2525 = 0.379, sqrt(2) x 0.3351 = 0.474, rounded up). Planning effect 0.07: n_required =
+# ceil(((1.95996 + 0.84162) x 0.48 / 0.07)^2) = 370 <= 400 (MDE at N 400: 0.067).
+# Any later change is an amendment: a new registration with `amends` and a new hash in spec.yaml (05:166).
+registration_version: 1
+registration_id: mm-a5-sd35-ocr-superiority-v1
+signed_by: prototype-unsigned
+amends: "sha256:2570e56e0ae63755f79d213a96246a4102486f3433f61e37bd669ab2f7cbbec1"
+created_at: "2026-11-17T18:20:42Z"
+workflow: mm-a5-sd35-flow-grpo
+gate: quality_gate
+clause:
+  type: superiority
+  metric: ocr_b_acc
+  direction: higher_is_better
+  margin: 0.0
+  alpha: 0.025
+  power: 0.8
+  planning_effect: 0.07
+  sigma_plan: fixed
+  unit: item
+  samples_per_item: 1
+  eval_seeds: [11]
+  interval: cluster_bootstrap
+  blocking: true
+margin_justification: >-
+  Superiority with delta_sup = 0: any held-out gain of mean docTR OCR accuracy counts. Prototype value, not reviewed
+  by a named team.
+sigma_pilot:
+  sigma: 0.48
+  source: >-
+    GPU smoke (records/area5-sd35/smoke-2, eval-smoke-base-2, eval-smoke-cut-1): first 40 registered items, seed 11,
+    the deployment sampler. Paired differences of ocr_b_acc, smoke cut 2 (4 optimizer steps) minus base: mean -0.040,
+    SD 0.227; base item SD 0.301. sigma_plan = max(1.5 x ucb80(0.227), sqrt(2) x ucb80(0.301)) = 0.474, rounded up to
+    0.48 (the 1.5 factor covers area 3's ratio 1.43 of the full-run SD to the pilot's; sqrt(2) x the base SD bounds
+    the paired SD of independent arms).
+baseline_pilot_mean: 0.412    # base, first 40 items (mode share 0.175, sd 0.301)
+construct_alignment: >-
+  ocr_b_acc measures the construct of the training reward ocr_accuracy_paddleocr (the quoted text is legibly
+  rendered) with another OCR engine (docTR db_resnet50 + crnn_vgg16_bn, not PaddleOCR PP-OCRv4) and another formula
+  (the best-matching substring of the recognized text instead of the whole-page edit distance). The formula was chosen
+  after the smoke baseline (the whole-page formula scored 0 on 52.5 % of the base's 40 smoke items because docTR reads
+  background texture as text) and before this registration. A pass shows that the reward's gain transfers to an
+  independent OCR engine, not that the images are better otherwise.
+eval_distribution:
+  item_set_hash: "sha256:0b01553c4c74ef18c9954dca686c8edc00b18e20e3d43346265858303d8ad4a7"   # manifest of area5-sd35/items/
+# The deployment sampler (every cut's sampler.json; eval_images.py uses it unchanged): 10-step Euler ODE
+# (noise_level 0), CFG 4.5, 512 px, fp16 transformer.
+sampler: {"autocast": "float16", "guidance_scale": 4.5, "latents_dtype": "float32", "max_sequence_length": 128, "negative_prompt": "", "noise": "per sample: torch.Generator('cpu').manual_seed(seed); initial latents, then one draw per step when noise_level > 0", "noise_level": 0.0, "num_steps": 10, "resolution": 512, "scheduler": "FlowMatchEulerDiscreteScheduler", "scheduler_config": {"_class_name": "FlowMatchEulerDiscreteScheduler", "_diffusers_version": "0.29.0.dev0", "_use_default_values": ["base_image_seq_len", "base_shift", "invert_sigmas", "max_image_seq_len", "max_shift", "shift_terminal", "stochastic_sampling", "time_shift_type", "use_beta_sigmas", "use_dynamic_shifting", "use_exponential_sigmas", "use_karras_sigmas"], "base_image_seq_len": 256, "base_shift": 0.5, "invert_sigmas": false, "max_image_seq_len": 4096, "max_shift": 1.15, "num_train_timesteps": 1000, "shift": 3.0, "shift_terminal": null, "stochastic_sampling": false, "time_shift_type": "exponential", "use_beta_sigmas": false, "use_dynamic_shifting": false, "use_exponential_sigmas": false, "use_karras_sigmas": false}, "sigmas": [1.0, 0.96012932, 0.91334897, 0.8576923, 0.79036826, 0.70727849, 0.60215056, 0.46487603, 0.27804878, 0.00892857, 0.0], "step": "flow_grpo sde_step_with_logprob (sde); noise_level 0 = Euler ODE step", "text_encoder_dtype": "fp16", "transformer_dtype": "fp16", "vae_dtype": "float32"}
+evaluators:
+  - id: t2i.sd35_ocr_doctr_items@0.1
+    # EXT-6: SHA-256 of the canonical JSON {evaluator, metric, direction, scorer}; scorer ocr_accuracy_doctr with
+    # code_sha256 = SHA-256 of runtime/eval_images.py (sha256:f9766b70...).
+    # Evaluator change in this amendment (not only a rename): the gate ran with eval_images.py sha256:fdad8eb9...
+    # (identity sha256:55f0ff6a...); the published file differs by a comment and docstring cleanup and the schema id
+    # it writes (ptc_hub.item_eval), so the identity is new. Scores, versions and weights are unchanged (RESULT.md).
+    manifest_hash: "sha256:963834434c3b8ff661d97c9a711a41326dbbdf9b9242961093faaa536ed7d73e"
+multiplicity:
+  plan: single_gate
+  family: null
+analysis_code_version: ptc-hub 0.2.0
+bootstrap:
+  replicates: 10000
+  seed: 20261114
+pairing:
+  max_unpaired: 0
+min_paired: 10
+contamination:
+  allow_exact_overlap: false
+post_hoc: true

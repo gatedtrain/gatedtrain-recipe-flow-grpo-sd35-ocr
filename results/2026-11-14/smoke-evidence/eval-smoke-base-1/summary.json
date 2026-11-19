@@ -1,0 +1,70 @@
+{
+  "agreement_a_b": {
+    "both_1": 2,
+    "pearson": 0.5699726646280988
+  },
+  "arms": {
+    "ocr_a_acc": {
+      "construct_aligned": false,
+      "evaluator_id": "t2i.sd35_ocr_paddle_items@0.1",
+      "role": "supporting",
+      "tier_proposal": "T0"
+    },
+    "ocr_b_acc": {
+      "construct_aligned": true,
+      "evaluator_id": "t2i.sd35_ocr_doctr_items@0.1",
+      "role": "deciding",
+      "tier_proposal": "T3 (proposed, construct-aligned)"
+    }
+  },
+  "base_only": true,
+  "checkpoint": null,
+  "device": "cuda",
+  "dtype": "torch.float16",
+  "epoch": 0,
+  "errors": 0,
+  "images": 40,
+  "items": 40,
+  "metrics": {
+    "ocr_a_acc": {
+      "max": 1.0,
+      "mean": 0.4194119672420504,
+      "min": 0.0,
+      "n": 40,
+      "sd": 0.37813776879319716,
+      "share_at_0": 0.275,
+      "share_at_1": 0.075
+    },
+    "ocr_b_acc": {
+      "max": 1.0,
+      "mean": 0.2170343382108088,
+      "min": 0.0,
+      "n": 40,
+      "sd": 0.30415595427639003,
+      "share_at_0": 0.525,
+      "share_at_1": 0.05
+    }
+  },
+  "missing_hashes": [
+    "model_hash",
+    "item_set_hash"
+  ],
+  "nonfinite": 0,
+  "peak_allocated_gb": 12.629,
+  "peak_reserved_gb": 19.883,
+  "repeats": 1,
+  "rss_mb": {
+    "after_encode": 10195.7,
+    "after_load": 12241.1,
+    "peak": 12241.1,
+    "start": 528.1
+  },
+  "sampler_hash": "sha256:bcf6eaa84a0231e9270ff0e9bf5d2495a313450a1a32bc6bf10e513cf4486310",
+  "seconds": {
+    "generation": 23.8,
+    "ocr_a": 3.5,
+    "ocr_b": 1.6,
+    "wall": 62.4
+  },
+  "seconds_per_image": 1.561
+}

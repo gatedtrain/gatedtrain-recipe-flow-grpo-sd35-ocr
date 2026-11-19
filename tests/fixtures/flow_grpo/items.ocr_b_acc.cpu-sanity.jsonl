@@ -1,0 +1,2 @@
+{"error": null, "item": "ocr-test-0000", "output_ref": {"path": "images/ocr-test-0000/r0.png", "sha256": "sha256:da29930494a84cb82493eb039becec883550867feca4438dc0b2a2b2bf45f771"}, "repeat": 0, "score": 0.0, "seed": 11, "sub_metrics": {"nonfinite": 0, "ocr_a_acc": 0.0, "ocr_b_acc": 0.0}}
+{"error": null, "item": "ocr-test-0001", "output_ref": {"path": "images/ocr-test-0001/r0.png", "sha256": "sha256:e55faaef17868b97b0ebfbf8c59810513709e2cc6430b3c151a497f8dbb403e7"}, "repeat": 0, "score": 0.0, "seed": 11, "sub_metrics": {"nonfinite": 0, "ocr_a_acc": 0.0, "ocr_b_acc": 0.0}}

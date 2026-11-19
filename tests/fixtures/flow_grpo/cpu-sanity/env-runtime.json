@@ -1,0 +1,12 @@
+{
+  "cpu_count": 32,
+  "env_freeze_sha256": "sha256:565ea7925c688ad191e8ad88b6bb6ec4a4ac37fa5364debd915c516d0c00c6cc",
+  "executable": "/srv/ptc/flow-grpo-sd35-ocr/runtime/.venv/bin/python",
+  "gid": 1000,
+  "image_cuda_version": null,
+  "python": "3.12.16",
+  "sampler_code_sha256": "sha256:83133e246f4b73daa8cf3576b2e7152960a98fb7f19b5e92ad36cf3b5bbff589",
+  "script_sha256": "sha256:a892c40dfeb24bb95c535bea9118818bfc5f6e03a18ff7d67198929c5307e1b9",
+  "uid": 1000,
+  "uv_lock_sha256": "sha256:8243b02f8287944026511dff3489f2cb23c91b88a0fd0d7a1b8f22678ece20d7"
+}
