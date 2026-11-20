@@ -19,7 +19,9 @@ block's is the adapter's SAMPLER_CODE_SHA256.
 
 from __future__ import annotations
 
+import ast
 import contextlib
+import hashlib
 import importlib.machinery
 import importlib.util
 import io
@@ -531,6 +533,30 @@ class TestCutsAndBinding(Tmp):
             T.read_prompts(d)
 
 
+def main_block_sha256(path: Path, blocks) -> str:
+    """SHA-256 of main()'s top-level statements in `blocks`, each (first, last): from the statement matching `first`
+    (it must match exactly one) to the next one matching `last`, both included, as ast.unparse writes them (comments
+    and layout do not count)."""
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    body = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "main").body
+    parts = []
+    for first, last in blocks:
+        starts = [k for k, n in enumerate(body) if first(n)]
+        if len(starts) != 1:
+            raise AssertionError(f"{path.name}: main() has {len(starts)} statements matching the block's first anchor")
+        end = next(k for k in range(starts[0], len(body)) if last(body[k]))
+        parts.extend(ast.unparse(n) for n in body[starts[0]:end + 1])
+    return "sha256:" + hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+
+
+def assigns(name: str):
+    return lambda n: isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == name for t in n.targets)
+
+
+def epoch_loop(n) -> bool:
+    return isinstance(n, ast.For) and isinstance(n.target, ast.Name) and n.target.id == "epoch"
+
+
 # ---------------------------------------------------------------------------
 # A whole run's logs, written with the runtime's functions, through the adapter's consumption check
 # ---------------------------------------------------------------------------
@@ -640,6 +666,17 @@ class TestRunThroughTheLedger(Tmp):
         self.assertEqual(sum(1 for _, step in plan if step is None), filtered)
         reinc = [p["reincluded"] for p in read_jsonl(out / "epoch_plan.jsonl")]
         self.assertTrue(any(reinc), "the rewards should make the padding re-include a zero-advantage sample")
+
+    # main()'s statements that run_logs follows (the prompt draw: `plans = {}` and its loop; and from
+    # `global_step = 0` through the epoch loop). A change there (not to comments or layout) changes this hash:
+    # bring run_logs in line with main(), then update it.
+    LEDGER_BLOCK_SHA256 = "sha256:3fd799b344ba672aee9d8f720565eb5d59163cb5f65364f18866d90ac1ef2c8a"
+
+    def test_replica_tracks_mains_bookkeeping(self):
+        blocks = [(assigns("plans"), epoch_loop), (assigns("global_step"), epoch_loop)]
+        self.assertEqual(main_block_sha256(RUNTIME / "train_flow_grpo.py", blocks), self.LEDGER_BLOCK_SHA256,
+                         "main()'s ledger bookkeeping changed: update the replica in TestRunThroughTheLedger and this "
+                         "hash")
 
 
 class TestRapidfuzzStandIn(unittest.TestCase):
