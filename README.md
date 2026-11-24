@@ -1,30 +1,50 @@
 # gatedtrain recipe: Flow-GRPO SD3.5 OCR
 
-A [gatedtrain](https://github.com/gatedtrain/gatedtrain) recipe: Flow-GRPO trains a LoRA on Stable Diffusion 3.5 Medium to render the
-quoted text of a prompt (flow_grpo's OCR task), with a minimal port of flow_grpo (`yifan123/flow_grpo` at `879042cf`,
-MIT) on diffusers + peft. The training reward is the OCR accuracy of PaddleOCR PP-OCRv4; gatedtrain gates the trained LoRA
-against the base model on 400 held-out prompts, scored by a second OCR engine (docTR). Prototype.
+This recipe teaches Stable Diffusion 3.5 Medium to render the quoted text of a prompt, and lets
+[gatedtrain](https://github.com/gatedtrain/gatedtrain) decide whether the trained model really is better than the one
+it started from. Flow-GRPO trains a LoRA on the model (flow_grpo's OCR task), using a minimal port of flow_grpo
+(`yifan123/flow_grpo` at `879042cf`, MIT) on diffusers and peft. The training reward is the OCR accuracy of PaddleOCR
+PP-OCRv4. gatedtrain then gates the trained LoRA against the base model on 400 held-out prompts, scored by a second OCR
+engine (docTR), by a rule registered before training.
 
-Code comments, tests and `RESULT.md` cite records of the framework's development: the maintainers' decision record
-("Area 5 decisions"; `runtime/README.md` "Decisions taken" summarizes how its questions were settled), the
-framework's review rounds ("Review 10 M1") and ids of its internal issue lists (`G-21`). Those records are not
-published.
+A recipe is a ready-made external run for gatedtrain: the training code with its locked environment, plus an
+*adapter*, the small plugin through which gatedtrain reads the run's outputs. gatedtrain does not start the training;
+you run it.
 
-## Layout
+This is a prototype: the result below is one registered run, not a benchmark claim.
 
-| Path | What |
+## How it works
+
+```mermaid
+flowchart LR
+    fetch["fetch_models.py and eval_images.py --make-items:<br/>OCR engines and prompts, pinned"] --> train["train_flow_grpo.py in a container<br/>(Flow-GRPO, LoRA)"]
+    train --> cuts["LoRA cuts and<br/>consumption logs"]
+    cuts --> eval["eval_images.py: base and trained model on 400 prompts,<br/>scored by docTR"]
+    eval --> arms["Arm files: per-prompt OCR scores"]
+    arms --> collect["gatedtrain ext-collect"]
+    cuts -->|"read through the adapter flow_grpo_sd35"| collect
+    collect --> gate{"Gate"}
+    gate --> report["Gate report, consumption ledger"]
+```
+
+`gatedtrain ext-launch` checks the run request and prints the container command; you run it. The steps, flags and
+arm files are explained in gatedtrain's [External runs](https://gatedtrain.github.io/gatedtrain/external-runs/) guide.
+
+## Result
+
+One registered run: 30 epochs of 64 samples (1,920 samples, 60 optimizer steps), 1.49 GPU-hours.
+
+| | `ocr_b_acc` (docTR) on 400 held-out prompts |
 |---|---|
-| `src/gatedtrain_recipe_flow_grpo_sd35_ocr/` | the gatedtrain adapter `flow_grpo_sd35` (`adapter.py`, a subclass of gatedtrain's `gatedtrain.families.flow_grpo.FlowGrpoAdapter`) and its registry rows (`rows.py`), registered through the `gatedtrain.adapters` entry point |
-| `runtime/` | what runs in the container: `train_flow_grpo.py` (the Flow-GRPO port), `eval_images.py` (image generation and both OCR scorers; `--make-items` builds the item set and the training shard), `fetch_models.py` (OCR engine weights, hashes of every model file in `MODELS.json`), the registered item set (`items/`), the training shard's metadata (`prompts/prompts_meta.json`), and its own `pyproject.toml` and `uv.lock` |
-| `container/Containerfile` | the runtime image: the pinned CUDA base image plus the X11/GL system libraries that OpenCV loads; Python and the runtime venv are mounted read-only from the host |
-| `tests/` | the adapter's tests on fixture runs (no GPU, no model needed) and gatedtrain's conformance check |
-| `results/2026-11-14/` | the gate files of the published result (redacted copies: host paths replaced by placeholders; see `RESULT.md`) and the smoke base evaluation's scores |
+| Base (SD3.5 Medium) | 0.475 |
+| Trained (cut 30) | 0.520 |
+| Gate | **PASS**: +0.0449, 95% cluster-bootstrap interval [0.0200, 0.0703], p 1.9e-04 |
 
-Not in the repository (git-ignored, regenerated): `runtime/models/stable-diffusion-3.5-medium/` (a gated Hugging Face
-model: accept its license and download revision `b940f670f0eda2d07fbb75229e779da1ad11eb80` yourself; `fetch_models.py`
-only hashes it), `runtime/ocr-models/` (`fetch_models.py`), `runtime/data-source/ocr/{train,test}.txt` (flow_grpo's
-`dataset/ocr/` at `879042cf`; hashes in `runtime/prompts/prompts_meta.json`), `runtime/prompts/train.jsonl`
-(`eval_images.py --make-items` from the data source; its SHA-256 is in `prompts_meta.json`), `runtime/.venv`.
+The deciding metric is construct-aligned with the reward (disclosed in the registration and the report). The
+supporting arm `ocr_a_acc` (PaddleOCR, the reward engine) goes from 0.450 to 0.479; it does not gate.
+
+`RESULT.md` has the full record: the registration, power, overlap with training, the impact query and the
+re-collection with this repository's adapter. The gate files are under `results/2026-11-14/`.
 
 ## Setup
 
@@ -45,15 +65,32 @@ Trust: `fetch_models.py` unpickles the two docTR `.pt` downloads (with `torch.lo
 their full SHA-256) and converts them to safetensors; the LoRA cuts are safetensors. Load only checkpoints and model
 files you produced or verified against the pinned hashes.
 
+## Layout
+
+| Path | What |
+|---|---|
+| `src/gatedtrain_recipe_flow_grpo_sd35_ocr/` | the gatedtrain adapter `flow_grpo_sd35` (`adapter.py`, a subclass of gatedtrain's `gatedtrain.families.flow_grpo.FlowGrpoAdapter`) and its registry rows (`rows.py`), registered through the `gatedtrain.adapters` entry point |
+| `runtime/` | what runs in the container: `train_flow_grpo.py` (the Flow-GRPO port), `eval_images.py` (image generation and both OCR scorers; `--make-items` builds the item set and the training shard), `fetch_models.py` (OCR engine weights, hashes of every model file in `MODELS.json`), the registered item set (`items/`), the training shard's metadata (`prompts/prompts_meta.json`), and its own `pyproject.toml` and `uv.lock` |
+| `container/Containerfile` | the runtime image: the pinned CUDA base image plus the X11/GL system libraries that OpenCV loads; Python and the runtime venv are mounted read-only from the host |
+| `tests/` | the adapter's tests on fixture runs (no GPU, no model needed) and gatedtrain's conformance check |
+| `results/2026-11-14/` | the gate files of the published result (redacted copies: host paths replaced by placeholders; see `RESULT.md`) and the smoke base evaluation's scores |
+
+Not in the repository (git-ignored, regenerated): `runtime/models/stable-diffusion-3.5-medium/` (a gated Hugging Face
+model: accept its license and download revision `b940f670f0eda2d07fbb75229e779da1ad11eb80` yourself; `fetch_models.py`
+only hashes it), `runtime/ocr-models/` (`fetch_models.py`), `runtime/data-source/ocr/{train,test}.txt` (flow_grpo's
+`dataset/ocr/` at `879042cf`; hashes in `runtime/prompts/prompts_meta.json`), `runtime/prompts/train.jsonl`
+(`eval_images.py --make-items` from the data source; its SHA-256 is in `prompts_meta.json`), `runtime/.venv`.
+
 ## Tests
 
 ```bash
 python -m unittest discover -s tests -t tests
 ```
 
-## Result
-
-See `RESULT.md`.
+Code comments, tests and `RESULT.md` cite records of the framework's development: the maintainers' decision record
+("Area 5 decisions"; `runtime/README.md` "Decisions taken" summarizes how its questions were settled), the
+framework's review rounds ("Review 10 M1") and ids of its internal issue lists (`G-21`). Those records are not
+published.
 
 ## Data and licenses
 
