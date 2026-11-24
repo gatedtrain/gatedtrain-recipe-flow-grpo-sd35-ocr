@@ -17,7 +17,7 @@ This is a prototype: the result below is one registered run, not a benchmark cla
 
 ```mermaid
 flowchart LR
-    fetch["fetch_models.py and eval_images.py --make-items:<br/>OCR engines and prompts, pinned"] --> train["train_flow_grpo.py in a container<br/>(Flow-GRPO, LoRA)"]
+    fetch["fetch_models.py and eval_images.py --make-items:<br/>OCR engines and prompts, pinned;<br/>SD3.5 Medium is gated: you download it, fetch_models.py only hashes it"] --> train["train_flow_grpo.py in a container<br/>(Flow-GRPO, LoRA)"]
     train --> cuts["LoRA cuts and<br/>consumption logs"]
     cuts --> eval["eval_images.py: base and trained model on 400 prompts,<br/>scored by docTR"]
     eval --> arms["Arm files: per-prompt OCR scores"]
@@ -38,7 +38,9 @@ One registered run: 30 epochs of 64 samples (1,920 samples, 60 optimizer steps),
 |---|---|
 | Base (SD3.5 Medium) | 0.475 |
 | Trained (cut 30) | 0.520 |
-| Gate | **PASS**: +0.0449, 95% cluster-bootstrap interval [0.0200, 0.0703], p 1.9e-04 |
+| Gate | **PASS** under the original registration; **INCONCLUSIVE (post_hoc)** under the registration amended for the renames: +0.0449, 95% cluster-bootstrap interval [0.0200, 0.0703], p 1.9e-04 |
+
+The amendment is post hoc: the scorer the registration pins had changed after the gate, in a cleanup before publication, so the amendment also carries a new evaluator identity.
 
 The deciding metric is construct-aligned with the reward (disclosed in the registration and the report). The
 supporting arm `ocr_a_acc` (PaddleOCR, the reward engine) goes from 0.450 to 0.479; it does not gate.
